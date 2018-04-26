@@ -25,19 +25,20 @@ import android.view.View;
 public class Chess_Panel extends View{
     private int myPanelWidth ;        //棋盘宽度
     private float myLineHeight;    //行宽
-    private int maxLine = 10;        //行数
 
     private Paint myPaint;         //画笔
     private Bitmap myWhitePiece;    //白棋子
     private Bitmap myBlackPiece;    //黑棋子
-    private float ratioPieceOfLineHight = 3 * 1.0f / 4;  //棋子为行宽的3/4；
+    private float ratioPieceOfLineHeight = 3 * 1.0f / 4;  //棋子为行宽的3/4；
 
     private Canvas canvas;
 
-    private boolean isGemOver;        //游戏结束
+    private RenjuAI renjuAI;
+
+    private boolean isGameOver;        //游戏结束
     public static int WHITE_WIN = 0;  //胜利为白方标志
     public static int BLACK_WIN = 1;  //胜利为黑方标志
-    private boolean isWhite = true;  //判断是否是白棋先手，或当前为白棋下子
+    private boolean isWhite = true;  //判断AI是否为白棋（即后手）
 
     private List<Point> myWhiteArray = new ArrayList<Point>();  //白棋子位置信息
     private List<Point> myBlackArray = new ArrayList<Point>();  //黑棋子位置信息
@@ -75,12 +76,12 @@ public class Chess_Panel extends View{
 
         myWhitePiece = BitmapFactory.decodeResource(getResources(),R.drawable.white); //设置棋子图片
         myBlackPiece = BitmapFactory.decodeResource(getResources(), R.drawable.black);
-
+        renjuAI = new RenjuAI(10,isWhite);
     }
 
     //触发事件
     public boolean onTouchEvent(MotionEvent event){
-        if (isGemOver) {
+        if (isGameOver) {
             return false;
         }
         int action = event.getAction();
@@ -93,13 +94,17 @@ public class Chess_Panel extends View{
                 return false;
             }
 
-            if (isWhite) {
+            renjuAI.placePiece(p);
+            Point AI_Result = renjuAI.getPoint();//AI得出的下棋的位置
+
+            if (!isWhite) {
                 myWhiteArray.add(p);
+                myBlackArray.add(AI_Result);
             }else {
                 myBlackArray.add(p);
+                myWhiteArray.add(AI_Result);
             }
             invalidate();
-            isWhite = !isWhite;
         }
         return true;
     }
@@ -136,7 +141,7 @@ public class Chess_Panel extends View{
         //myLineHeight = myPanelWidth*1.0f/maxLine;
         mUnder = height - (height - myPanelWidth) / 2;
 
-        int pieceWidth = (int) (myLineHeight*ratioPieceOfLineHight);  //棋子大小占行宽的3/4
+        int pieceWidth = (int) (myLineHeight*ratioPieceOfLineHeight);  //棋子大小占行宽的3/4
         myWhitePiece = Bitmap.createScaledBitmap(myWhitePiece, pieceWidth, pieceWidth, false);    //以src为原图，创建新的图像，指定新图像的高宽以及是否可变。
         myBlackPiece = Bitmap.createScaledBitmap(myBlackPiece, pieceWidth, pieceWidth, false);
     }
@@ -172,14 +177,18 @@ public class Chess_Panel extends View{
 
         for(int i =0; i< n2 ;i++){
             Point blackPoint = myBlackArray.get(i);
-            canvas.drawBitmap(myBlackPiece, (blackPoint.x+(1-ratioPieceOfLineHight)/2)*myLineHeight-0.255f*myLineHeight,
-                    (blackPoint.y+(1-ratioPieceOfLineHight)/2)*myLineHeight-0.255f*myLineHeight, null);
+           //Log.d("neww", blackPoint.x+" x b");
+           // Log.d("neww", blackPoint.y+" y b");
+            canvas.drawBitmap(myBlackPiece, (blackPoint.x+(1-ratioPieceOfLineHeight)/2)*myLineHeight-0.255f*myLineHeight,
+                    (blackPoint.y+(1-ratioPieceOfLineHeight)/2)*myLineHeight-0.255f*myLineHeight, null);
         }
 
         for(int i =0; i< n1 ;i++){
             Point whitePoint = myWhiteArray.get(i);
-            canvas.drawBitmap(myWhitePiece, (whitePoint.x+(1-ratioPieceOfLineHight)/2)* myLineHeight-0.255f*myLineHeight,
-                    (whitePoint.y+(1-ratioPieceOfLineHight)/2)*myLineHeight-0.255f*myLineHeight, null);
+           // Log.d("neww", whitePoint.x+" x w");
+           // Log.d("neww", whitePoint.y+" y w");
+            canvas.drawBitmap(myWhitePiece, (whitePoint.x+(1-ratioPieceOfLineHeight)/2)* myLineHeight-0.255f*myLineHeight,
+                    (whitePoint.y+(1-ratioPieceOfLineHeight)/2)*myLineHeight-0.255f*myLineHeight, null);
         }
 
     }
@@ -190,7 +199,7 @@ public class Chess_Panel extends View{
         boolean blackWin = checkFiveInLine(myBlackArray);
 
         if (whiteWin || blackWin) {
-            isGemOver = true;
+            isGameOver = true;
             if (onGameListener != null) {
                 onGameListener.onGameOver(whiteWin ? WHITE_WIN : BLACK_WIN);
             }
@@ -340,8 +349,9 @@ public class Chess_Panel extends View{
     protected void restartGame(){
         myBlackArray.clear();
         myWhiteArray.clear();
-        isGemOver = false;
+        isGameOver = false;
         isWhite = false;
+        renjuAI.init();
         invalidate();
     }
 }
