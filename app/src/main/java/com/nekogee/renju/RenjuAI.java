@@ -12,8 +12,9 @@ public class RenjuAI {
     private int size;//棋盘行或列数
     private boolean isWhite;//黑子先走，则false为先手
 
-    private final int WHITE = 1000;
+    private final int WHITE = 1;
     private final int BLACK = -100;
+    private boolean start = true;
     private int tmp;
 
     public RenjuAI(int size,boolean isWhite) {
@@ -24,6 +25,9 @@ public class RenjuAI {
 
     public void init() {
         chessBoard = new int[size+1][size+1];//空位默认初始化为0
+        if(!isWhite) {
+            chessBoard[size/2][size/2] = BLACK;
+        }
         tmp = 1;
     }
 

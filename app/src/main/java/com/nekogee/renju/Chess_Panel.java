@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -17,10 +18,12 @@ import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.graphics.drawable.DrawableCompat;
+import android.support.v7.app.AlertDialog;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Toast;
 
 public class Chess_Panel extends View{
     private int myPanelWidth ;        //棋盘宽度
@@ -38,10 +41,10 @@ public class Chess_Panel extends View{
     private boolean isGameOver;        //游戏结束
     public static int WHITE_WIN = 0;  //胜利为白方标志
     public static int BLACK_WIN = 1;  //胜利为黑方标志
-    private boolean isWhite = true;  //判断AI是否为白棋（即后手）
+    public boolean isWhite = true;  //判断AI是否为白棋（即后手）
 
     private List<Point> myWhiteArray = new ArrayList<Point>();  //白棋子位置信息
-    private List<Point> myBlackArray = new ArrayList<Point>();  //黑棋子位置信息
+    public List<Point> myBlackArray = new ArrayList<Point>();  //黑棋子位置信息
 
     private onGameListener onGameListener;  //回调接口
     private int mUnder;        //dialog的Y坐标
@@ -77,8 +80,13 @@ public class Chess_Panel extends View{
         myWhitePiece = BitmapFactory.decodeResource(getResources(),R.drawable.white); //设置棋子图片
         myBlackPiece = BitmapFactory.decodeResource(getResources(), R.drawable.black);
         renjuAI = new RenjuAI(10,isWhite);
+
     }
 
+    public void update() {
+        invalidate();
+        Toast.makeText(getContext(),"update",Toast.LENGTH_SHORT);
+    }
     //触发事件
     public boolean onTouchEvent(MotionEvent event){
         if (isGameOver) {
@@ -215,9 +223,8 @@ public class Chess_Panel extends View{
         for(Point p : myArray){
             int x = p.x;
             int y = p.y;
-
-            boolean win_flag =                             //判断是否存在五子相连情况
-                    checkHorizontal(x , y ,myArray)||checkVertical(x,y,myArray)
+            //判断是否存在五子相连情况
+            boolean win_flag = checkHorizontal(x , y ,myArray)||checkVertical(x,y,myArray)
                             ||checkLeftDiagonal(x,y,myArray)||checkRightDiagonal(x,y,myArray);
             if (win_flag) {
                 return true;
@@ -337,20 +344,24 @@ public class Chess_Panel extends View{
     protected void regret() {
         int n1 = myWhiteArray.size();
         int n2 = myBlackArray.size();
-        if(!isWhite) {
+        //悔一步
+        /*if(!isWhite) {
             myWhiteArray.remove(n1-1);
         } else {
             myBlackArray.remove(n2-1);
         }
-        isWhite = !isWhite;
+        isWhite = !isWhite;*/
+        //悔一对
+        myWhiteArray.remove(n1-1);
+        myBlackArray.remove(n2-1);
         invalidate();
     }
+
     //重新开始游戏
     protected void restartGame(){
         myBlackArray.clear();
         myWhiteArray.clear();
         isGameOver = false;
-        isWhite = false;
         renjuAI.init();
         invalidate();
     }
