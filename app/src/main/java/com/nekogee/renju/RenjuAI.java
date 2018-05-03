@@ -17,6 +17,7 @@ public class RenjuAI {
     private int [][] chessBoard;
     private int size;//棋盘行或列数
     private boolean isWhite;//黑子先走，则false为先手
+    private Point point;//AI最终决定的点
 
     //大概是一个没什么用的优化
     /*private int up = size+8;//
@@ -58,6 +59,12 @@ public class RenjuAI {
     private final int WHITE = 1;
     private final int BLACK = 2;
     private final int OUTSIDER = 3; //棋盘外的点的值
+
+    private final int ORDINARY = 3;//一般难度,搜索三层
+    private final int SMARTASS = 5;//困难难度,搜索五层
+    private final int MASTER = 7;//大师难度
+
+    private final int TOPSIZE = 10;//选取优先队列估值排前十的点
 
     /*
     private final int SCORE0 = 7;//搜9个
@@ -109,7 +116,12 @@ public class RenjuAI {
         if(p.y+4>up) up = p.y+4;
         if(p.y+4<down) down = p.y+4;*/
 
+        aiStart(SMARTASS);
+    }
+    //对方落子后AI开始运行
+    private void aiStart(int level) {
         searchArea();
+        point = searchPriorityQueue(level,TOPSIZE);
     }
     //对在有效范围内的点评分
     private void searchArea() {
@@ -157,20 +169,39 @@ public class RenjuAI {
             return 0;
         }
     }
+    //选取优先队列中的前十名进行极大极小搜索
+    private Point searchPriorityQueue(int depth, int size) {
+        Point ans = priorityQueue.peek().second;
+        Point p;
+        int tmp;
+        int maxValue = miniMax(priorityQueue.peek().second,chessBoard,depth);//保存miniMax搜索到的点的最大估值
+        for(int i=1;i<size;i++) {
+            p = priorityQueue.peek().second;
+            tmp = miniMax(p,chessBoard,depth);
+            if(tmp > maxValue) {
+                maxValue = tmp;
+                ans = p;
+            }
+            priorityQueue.remove();
+        }
+        return ans;
+    }
+    //极大极小搜索
+    private int miniMax(Point p, int [][] chessBoard, int depth) {
+
+        return 5;
+    }
 
     public Point getPoint() {
-        Log.d("neww", "size: "+priorityQueue.size());
-        Point p = priorityQueue.peek().second;
-        Log.d("neww", "value "+priorityQueue.peek().first);
         if(isWhite) {
-            chessBoard[p.x][p.y] = WHITE;
+            chessBoard[point.x][point.y] = WHITE;
         } else {
-            chessBoard[p.x][p.y] = BLACK;
+            chessBoard[point.x][point.y] = BLACK;
         }
         priorityQueue.clear();
-        p.x -= 4;
-        p.y -= 4;
-        return p;
+        point.x -= 4;
+        point.y -= 4;
+        return point;
     }
 
 }
